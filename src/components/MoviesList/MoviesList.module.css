@@ -1,0 +1,4 @@
+.NavLink:hover,
+.NavLink:focus {
+  color: palevioletred;
+}

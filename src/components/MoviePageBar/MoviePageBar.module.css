@@ -1,0 +1,16 @@
+.MovieBar {
+  padding-left: 30px;
+  padding-right: 30px;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.15);
+}
+
+.NavLink {
+  font-size: 20px;
+}
+
+.NavLink:hover,
+.NavLink:focus {
+  color: orangered;
+}
