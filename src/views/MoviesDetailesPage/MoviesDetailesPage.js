@@ -1,6 +1,5 @@
-import React, { Component, lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Route, Switch } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import { CSSTransition } from 'react-transition-group';
 
 import { fetchMovieId } from 'services/fetchApi';
@@ -19,8 +18,8 @@ const ReviewsSection = lazy(() =>
   import('components/ReviewsSection' /*webpackChunkName: "reviews-view" */),
 );
 
-export default class MoviesDetailesPage extends Component {
-  static defaultProps = {
+const MoviesDetailesPage = ({ location, history, match }) => {
+  const initialState = {
     isLoading: false,
     poster_path: null,
     vote_average: null,
@@ -30,100 +29,78 @@ export default class MoviesDetailesPage extends Component {
     release_date: null,
   };
 
-  static propTypes = {
-    location: PropTypes.object.isRequired,
-    history: PropTypes.object.isRequired,
-    match: PropTypes.object.isRequired,
-    isLoading: PropTypes.bool,
-    poster_path: PropTypes.string,
-    vote_average: PropTypes.string,
-    title: PropTypes.string,
-    genres: PropTypes.array,
-    overview: PropTypes.string,
-    release_date: PropTypes.string,
+  const [state, setState] = useState(initialState);
+
+  const handleGoBack = () => {
+    history.push(location?.state?.from || routes.home);
+    // if (location.state && location.state.from) {
+    //   return history.push(location.state.from);
+    // }
+    // history.push(routes.home);
   };
 
-  state = {
-    isLoading: this.isLoading,
-    poster_path: this.poster_path,
-    vote_average: this.vote_average,
-    title: this.title,
-    genres: this.genres,
-    overview: this.overview,
-    release_date: this.release_date,
-    handleGoBack: () => {
-      const { location, history } = this.props;
-      // history.push(location?.state?.from || routes.home);
-      if (location.state && location.state.from) {
-        return history.push(location.state.from);
-      }
-      history.push(routes.home);
-    },
-  };
-
-  slugId = id => id.match(/[a-zA-Z0-9]+$/)[0];
-
-  componentDidMount() {
-    this.setState({ isLoading: true });
-    const { movieId } = this.props.match.params;
+  useEffect(() => {
+    const { movieId } = match.params;
+    setState(prev => ({
+      ...prev,
+      isLoading: true,
+    }));
     fetchMovieId(makeId(movieId))
       .then(response =>
-        this.setState({
+        setState(prev => ({
+          ...prev,
           ...response.data,
           poster_path: `https://image.tmdb.org/t/p/w300${
             response.data.poster_path && response.data.poster_path
           }`,
           release_date: response.data.release_date.slice(0, 4),
           isLoading: false,
-        }),
+        })),
       )
-      .catch(error => this.setState({ error, isLoading: false }));
-  }
+      .catch(error => setState(prev => ({ ...prev, error, isLoading: false })));
+  }, [match.params]);
 
-  render() {
-    const { match } = this.props;
-    const { poster_path } = this.state;
+  const { poster_path } = state;
 
-    return (
-      <contextProps.Provider value={this.state}>
-        <>
-          {this.state.isLoading && <OnLoader />}
-          {poster_path ? (
-            <>
-              <CSSTransition
-                in={true}
-                appear={true}
-                timeout={250}
-                classNames={sA}
-                unmountOnExit
-              >
-                <div>
-                  <MovieCard />
-                  <MoviePageBar
-                  // locationSearch={this.props.location.state.from}
-                  />{' '}
-                </div>
-              </CSSTransition>
-              <Suspense fallback={<OnLoader />}>
-                <Switch>
-                  <Route
-                    exact
-                    path={`${match.path}/cast`}
-                    component={CastSection}
-                  />
-                  <Route
-                    exact
-                    path={`${match.path}/reviews`}
-                    component={ReviewsSection}
-                  />
-                </Switch>
-              </Suspense>
-            </>
-          ) : (
-            <p>We don't have any description for this movie.</p>
-          )}
-        </>
-      </contextProps.Provider>
-    );
-  }
-}
+  return (
+    <contextProps.Provider value={{ ...state, handleGoBack }}>
+      <>
+        {state.isLoading && <OnLoader />}
+        {poster_path ? (
+          <>
+            <CSSTransition
+              in={true}
+              appear={true}
+              timeout={250}
+              classNames={sA}
+              unmountOnExit
+            >
+              <div>
+                <MovieCard />
+                <MoviePageBar />{' '}
+              </div>
+            </CSSTransition>
+            <Suspense fallback={<OnLoader />}>
+              <Switch>
+                <Route
+                  exact
+                  path={`${match.path}/cast`}
+                  component={CastSection}
+                />
+                <Route
+                  exact
+                  path={`${match.path}/reviews`}
+                  component={ReviewsSection}
+                />
+              </Switch>
+            </Suspense>
+          </>
+        ) : (
+          <p>We don't have any description for this movie.</p>
+        )}
+      </>
+    </contextProps.Provider>
+  );
+};
+
+export default MoviesDetailesPage;

@@ -32,7 +32,6 @@ const MoviesList = ({ movies, location }) => {
 };
 MoviesList.prototype = {
   movies: PropTypes.array.isRequired,
-  location: PropTypes.object.isRequired,
 };
 
 export default withRouter(MoviesList);
